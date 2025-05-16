@@ -262,7 +262,7 @@ if __name__ == '__main__':
     parser.add_argument("--mp", action="store_true", help="Use Multi-GPUs",)
     parser.add_argument("--model_name", type=str, default="vace-14B", choices=list(WAN_CONFIGS.keys()), help="The model name to run.")
     parser.add_argument("--ulysses_size", type=int, default=1, help="The size of the ulysses parallelism in DiT.")
-    parser.add_argument("--ring_size", type=int, default=2, help="The size of the ring attention parallelism in DiT.")
+    parser.add_argument("--ring_size", type=int, default=1, help="The size of the ring attention parallelism in DiT.")
     parser.add_argument(
         "--ckpt_dir",
         type=str,
