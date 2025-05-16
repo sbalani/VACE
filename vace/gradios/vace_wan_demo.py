@@ -266,7 +266,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "--ckpt_dir",
         type=str,
-        default='models/14b',
+        default='models/Wan2.1-VACE-14B',
         help="The path to the checkpoint directory.",
     )
     parser.add_argument(
