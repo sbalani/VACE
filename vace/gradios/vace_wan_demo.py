@@ -37,7 +37,7 @@ class VACEInference:
         self.gallery_share = gallery_share
         self.gallery_share_data = FixedSizeQueue(max_size=gallery_share_limit)
         if not skip_load:
-            if not args.mp:
+            if args.mp:
                 self.pipe = WanVace(
                     config=WAN_CONFIGS[cfg.model_name],
                     checkpoint_dir=cfg.ckpt_dir,
