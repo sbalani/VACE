@@ -9,6 +9,7 @@ import imageio
 import numpy as np
 import torch
 import gradio as gr
+from huggingface_hub import snapshot_download
 
 sys.path.insert(0, os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3]))
 import wan
@@ -253,6 +254,18 @@ class VACEInference:
         self.refresh_button.click(lambda x: self.gallery_share_data.get() if self.gallery_share else x, inputs=[self.output_gallery], outputs=[self.output_gallery])
 
 
+def download_model(model_name="Wan-AI/Wan2.1-VACE-14B", local_dir="models/Wan2.1-VACE-14B"):
+    """Download model from HuggingFace to local directory."""
+    print(f"Downloading {model_name} to {local_dir}...")
+    os.makedirs(local_dir, exist_ok=True)
+    snapshot_download(
+        repo_id=model_name,
+        local_dir=local_dir,
+        local_dir_use_symlinks=False
+    )
+    print(f"Download complete! Model saved to {local_dir}")
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Argparser for VACE-WAN Demo:\n')
     parser.add_argument('--server_port', dest='server_port', help='', type=int, default=7860)
@@ -260,13 +273,13 @@ if __name__ == '__main__':
     parser.add_argument('--root_path', dest='root_path', help='', default=None)
     parser.add_argument('--save_dir', dest='save_dir', help='', default='cache')
     parser.add_argument("--mp", action="store_true", help="Use Multi-GPUs",)
-    parser.add_argument("--model_name", type=str, default="vace-1.3B", choices=list(WAN_CONFIGS.keys()), help="The model name to run.")
+    parser.add_argument("--model_name", type=str, default="vace-14B", choices=list(WAN_CONFIGS.keys()), help="The model name to run.")
     parser.add_argument("--ulysses_size", type=int, default=1, help="The size of the ulysses parallelism in DiT.")
     parser.add_argument("--ring_size", type=int, default=1, help="The size of the ring attention parallelism in DiT.")
     parser.add_argument(
         "--ckpt_dir",
         type=str,
-        default='models/Wan2.1-VACE-1.3B',
+        default='models/Wan2.1-VACE-14B',
         help="The path to the checkpoint directory.",
     )
     parser.add_argument(
@@ -274,8 +287,16 @@ if __name__ == '__main__':
         action="store_true",
         help="Offloading unnecessary computations to CPU.",
     )
+    parser.add_argument(
+        "--download",
+        action="store_true",
+        help="Download the model from HuggingFace if not present locally.",
+    )
 
     args = parser.parse_args()
+
+    if args.download:
+        download_model(local_dir=args.ckpt_dir)
 
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir, exist_ok=True)
