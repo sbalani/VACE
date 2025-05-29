@@ -27,6 +27,9 @@ from vace.configs import (VACE_IMAGE_PREPROCCESS_CONFIGS, VACE_IMAGE_MASK_PREPRO
                          VACE_COMPOSITION_PREPROCCESS_CONFIGS)
 import vace.annotators as annotators
 
+# Import preprocessing components
+from vace.gradios.vace_preprocess_demo import VACEVideoTag, VACEImageTag, VACETagComposition, VACEVideoTool
+
 
 class FixedSizeQueue:
     def __init__(self, max_size):
