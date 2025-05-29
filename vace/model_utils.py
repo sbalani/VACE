@@ -65,11 +65,11 @@ def ensure_annotator_models_downloaded(local_dir="models/VACE-Annotators"):
     models = {
         'dwpose_det': {
             'url': 'https://huggingface.co/camenduru/unianimate/resolve/main/yolox_l.onnx?download=true',
-            'path': os.path.join(local_dir, 'dwpose', 'yolox_l.onnx')
+            'path': os.path.join(local_dir, 'pose', 'yolox_l.onnx')
         },
         'dwpose_pose': {
             'url': 'https://huggingface.co/camenduru/unianimate/resolve/main/dw-ll_ucoco_384.onnx?download=true',
-            'path': os.path.join(local_dir, 'dwpose', 'dw-ll_ucoco_384.onnx')
+            'path': os.path.join(local_dir, 'pose', 'dw-ll_ucoco_384.onnx')
         },
         'salient': {
             'url': 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth',
