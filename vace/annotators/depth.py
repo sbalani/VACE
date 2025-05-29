@@ -5,39 +5,26 @@ import torch
 from einops import rearrange
 
 from .utils import convert_to_numpy, resize_image, resize_image_ori
+from .midas.api import MiDaSInference
+from ..model_utils import ensure_annotator_models_downloaded
 
 class DepthAnnotator:
-    def __init__(self, cfg, device=None):
-        from .midas.api import MiDaSInference
-        pretrained_model = cfg['PRETRAINED_MODEL']
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else device
+    def __init__(self, cfg):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        models = ensure_annotator_models_downloaded()
+        pretrained_model = models['midas']
         self.model = MiDaSInference(model_type='dpt_hybrid', model_path=pretrained_model).to(self.device)
+        self.model.eval()
         self.a = cfg.get('A', np.pi * 2.0)
         self.bg_th = cfg.get('BG_TH', 0.1)
 
-    @torch.no_grad()
-    @torch.inference_mode()
-    @torch.autocast('cuda', enabled=False)
-    def forward(self, image):
+    def __call__(self, image):
         image = convert_to_numpy(image)
-        image_depth = image
-        h, w, c = image.shape
-        image_depth, k = resize_image(image_depth,
-                                      1024 if min(h, w) > 1024 else min(h, w))
-        image_depth = torch.from_numpy(image_depth).float().to(self.device)
-        image_depth = image_depth / 127.5 - 1.0
-        image_depth = rearrange(image_depth, 'h w c -> 1 c h w')
-        depth = self.model(image_depth)[0]
-
-        depth_pt = depth.clone()
-        depth_pt -= torch.min(depth_pt)
-        depth_pt /= torch.max(depth_pt)
-        depth_pt = depth_pt.cpu().numpy()
-        depth_image = (depth_pt * 255.0).clip(0, 255).astype(np.uint8)
-        depth_image = depth_image[..., None].repeat(3, 2)
-
-        depth_image = resize_image_ori(h, w, depth_image, k)
-        return depth_image
+        image = resize_image(image, 384)
+        with torch.no_grad():
+            depth = self.model(image)
+        depth = resize_image_ori(depth, image.shape[:2])
+        return depth
 
 
 class DepthVideoAnnotator(DepthAnnotator):
