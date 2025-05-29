@@ -1,8 +1,32 @@
-*.pyc
-*.pth
+# Model files and directories
+models/
 *.pt
-*.pkl
+*.pth
 *.ckpt
+*.safetensors
+*.bin
+*.onnx
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+*.pyc
+*.pkl
 *.DS_Store
 *__pycache__*
 *.cache*
