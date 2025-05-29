@@ -5,6 +5,7 @@ import numpy as np
 import argparse
 
 from .utils import convert_to_numpy
+from ..model_utils import ensure_annotator_models_downloaded
 
 class FlowAnnotator:
     def __init__(self, cfg, device=None):
@@ -23,7 +24,8 @@ class FlowAnnotator:
             "alternate_corr": False
         }
         params = argparse.Namespace(**params)
-        pretrained_model = cfg['PRETRAINED_MODEL']
+        models = ensure_annotator_models_downloaded()
+        pretrained_model = models['flow']
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else device
         self.model = RAFT(params)
         self.model.load_state_dict({k.replace('module.', ''): v for k, v in torch.load(pretrained_model, map_location="cpu", weights_only=True).items()})
