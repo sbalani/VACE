@@ -17,6 +17,7 @@ from PIL import Image
 
 import wan
 from wan.utils.utils import cache_video, cache_image, str2bool
+from vace.model_utils import ensure_model_downloaded
 
 from models.wan import WanVace
 from models.wan.configs import WAN_CONFIGS, SIZE_CONFIGS, MAX_AREA_CONFIGS, SUPPORTED_SIZES
@@ -196,6 +197,9 @@ def _init_logging(rank):
 def main(args):
     args = argparse.Namespace(**args) if isinstance(args, dict) else args
     args = validate_args(args)
+
+    # Ensure model is downloaded before proceeding
+    args.ckpt_dir = ensure_model_downloaded(local_dir=args.ckpt_dir)
 
     rank = int(os.getenv("RANK", 0))
     world_size = int(os.getenv("WORLD_SIZE", 1))
