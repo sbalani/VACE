@@ -11,7 +11,11 @@ import torch
 import gradio as gr
 from huggingface_hub import snapshot_download
 
-sys.path.insert(0, os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3]))
+# Fix path handling
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(current_dir))
+sys.path.insert(0, project_root)
+
 import wan
 from vace.models.wan.wan_vace import WanVace, WanVaceMP
 from vace.models.wan.configs import WAN_CONFIGS, SIZE_CONFIGS
@@ -322,6 +326,11 @@ if __name__ == '__main__':
         action="store_true",
         help="Download the model from HuggingFace if not present locally.",
     )
+    parser.add_argument(
+        "--share",
+        action="store_true",
+        help="Create a public link for the interface.",
+    )
 
     args = parser.parse_args()
 
@@ -340,4 +349,6 @@ if __name__ == '__main__':
                                               server_port=args.server_port,
                                               root_path=args.root_path,
                                               allowed_paths=allowed_paths,
-                                              show_error=True, debug=True) 
+                                              show_error=True, 
+                                              debug=True,
+                                              share=args.share) 
