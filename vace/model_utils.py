@@ -58,8 +58,11 @@ def ensure_annotator_models_downloaded(local_dir="models/VACE-Annotators"):
             base_dir = os.getcwd()
         local_dir = os.path.join(base_dir, local_dir)
     
-    # Create base directory
-    os.makedirs(local_dir, exist_ok=True)
+    # Create base directory and all subdirectories
+    os.makedirs(os.path.join(local_dir, 'pose'), exist_ok=True)
+    os.makedirs(os.path.join(local_dir, 'salient'), exist_ok=True)
+    os.makedirs(os.path.join(local_dir, 'flow'), exist_ok=True)
+    os.makedirs(os.path.join(local_dir, 'depth'), exist_ok=True)
     
     # Define model URLs and their local paths
     models = {
