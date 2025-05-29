@@ -13,6 +13,15 @@ def ensure_model_downloaded(model_name="Wan-AI/Wan2.1-VACE-14B", local_dir="mode
     Returns:
         str: Path to the local model directory
     """
+    # Convert to absolute path if relative
+    if not os.path.isabs(local_dir):
+        # Check if we're in a workspace environment
+        if os.path.exists('/workspace'):
+            base_dir = '/workspace'
+        else:
+            base_dir = os.getcwd()
+        local_dir = os.path.join(base_dir, local_dir)
+    
     if not os.path.exists(local_dir):
         print(f"Model not found at {local_dir}. Downloading {model_name}...")
         os.makedirs(local_dir, exist_ok=True)
