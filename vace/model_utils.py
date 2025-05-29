@@ -38,7 +38,7 @@ def ensure_model_downloaded(model_name="Wan-AI/Wan2.1-VACE-14B", local_dir="mode
     
     return local_dir
 
-def ensure_annotator_models_downloaded(local_dir="models/VACE-Annotators"):
+def ensure_annotator_models_downloaded(local_dir="models"):
     """
     Ensures all annotator models are downloaded to the local directory.
     If the models already exist, they will not download again.
@@ -47,7 +47,7 @@ def ensure_annotator_models_downloaded(local_dir="models/VACE-Annotators"):
         local_dir (str): Local directory to save the models to
         
     Returns:
-        dict: Paths to the local model files
+        str: Path to the local model directory
     """
     # Convert to absolute path if relative
     if not os.path.isabs(local_dir):
@@ -58,62 +58,16 @@ def ensure_annotator_models_downloaded(local_dir="models/VACE-Annotators"):
             base_dir = os.getcwd()
         local_dir = os.path.join(base_dir, local_dir)
     
-    # Create base directory and all subdirectories
-    os.makedirs(os.path.join(local_dir, 'pose'), exist_ok=True)
-    os.makedirs(os.path.join(local_dir, 'salient'), exist_ok=True)
-    os.makedirs(os.path.join(local_dir, 'flow'), exist_ok=True)
-    os.makedirs(os.path.join(local_dir, 'depth'), exist_ok=True)
+    if not os.path.exists(local_dir):
+        print(f"VACE-Annotators models not found at {local_dir}. Downloading...")
+        os.makedirs(local_dir, exist_ok=True)
+        snapshot_download(
+            repo_id="ali-vilab/VACE-Annotators",
+            local_dir=local_dir,
+            local_dir_use_symlinks=False
+        )
+        print(f"Download complete! Models saved to {local_dir}")
+    else:
+        print(f"VACE-Annotators models already exist at {local_dir}")
     
-    # Define model URLs and their local paths
-    models = {
-        'dwpose_det': {
-            'url': 'https://huggingface.co/camenduru/unianimate/resolve/main/yolox_l.onnx?download=true',
-            'path': os.path.join(local_dir, 'pose', 'yolox_l.onnx')
-        },
-        'dwpose_pose': {
-            'url': 'https://huggingface.co/camenduru/unianimate/resolve/main/dw-ll_ucoco_384.onnx?download=true',
-            'path': os.path.join(local_dir, 'pose', 'dw-ll_ucoco_384.onnx')
-        },
-        'salient': {
-            'url': 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth',
-            'path': os.path.join(local_dir, 'salient', 'sam_vit_h_4b8939.pth')
-        },
-        'flow': {
-            'url': 'https://huggingface.co/sbalani/raft-things/resolve/main/raft-things.pth?download=true',
-            'path': os.path.join(local_dir, 'flow', 'raft-things.pth')
-        },
-        'midas': {
-            'url': 'https://huggingface.co/lllyasviel/ControlNet/resolve/main/annotator/ckpts/dpt_hybrid-midas-501f0c75.pt',
-            'path': os.path.join(local_dir, 'depth', 'dpt_hybrid-midas-501f0c75.pt')
-        },
-        'depth_anything_v2': {
-            'url': 'https://huggingface.co/depth-anything/Depth-Anything-V2-Large/resolve/main/depth_anything_v2_vitl.pth?download=true',
-            'path': os.path.join(local_dir, 'depth', 'depth_anything_v2_vitl.pth')
-        }
-    }
-    
-    # Download each model if it doesn't exist
-    for model_name, model_info in models.items():
-        if not os.path.exists(model_info['path']):
-            print(f"{model_name} model not found at {model_info['path']}. Downloading...")
-            os.makedirs(os.path.dirname(model_info['path']), exist_ok=True)
-            
-            response = requests.get(model_info['url'], stream=True)
-            total_size = int(response.headers.get('content-length', 0))
-            
-            with open(model_info['path'], 'wb') as f, tqdm(
-                desc=f"Downloading {model_name} model",
-                total=total_size,
-                unit='iB',
-                unit_scale=True,
-                unit_divisor=1024,
-            ) as pbar:
-                for data in response.iter_content(chunk_size=1024):
-                    size = f.write(data)
-                    pbar.update(size)
-            
-            print(f"Download complete! Model saved to {model_info['path']}")
-        else:
-            print(f"{model_name} model already exists at {model_info['path']}")
-    
-    return {name: info['path'] for name, info in models.items()} 
+    return local_dir 
