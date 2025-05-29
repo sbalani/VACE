@@ -64,7 +64,7 @@ def ensure_midas_model_downloaded(local_dir="models/VACE-Annotators/depth"):
         print(f"MiDaS model not found at {model_file}. Downloading...")
         os.makedirs(local_dir, exist_ok=True)
         
-        url = "https://github.com/intel-isl/DPT/releases/download/1_0/dpt_hybrid-midas-501f0c75.pt"
+        url = "https://huggingface.co/lllyasviel/ControlNet/resolve/main/annotator/ckpts/dpt_hybrid-midas-501f0c75.pt"
         response = requests.get(url, stream=True)
         total_size = int(response.headers.get('content-length', 0))
         
