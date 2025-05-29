@@ -82,6 +82,10 @@ def ensure_annotator_models_downloaded(local_dir="models/VACE-Annotators"):
         'midas': {
             'url': 'https://huggingface.co/lllyasviel/ControlNet/resolve/main/annotator/ckpts/dpt_hybrid-midas-501f0c75.pt',
             'path': os.path.join(local_dir, 'depth', 'dpt_hybrid-midas-501f0c75.pt')
+        },
+        'depth_anything_v2': {
+            'url': 'https://huggingface.co/depth-anything/Depth-Anything-V2-Large/resolve/main/depth_anything_v2_vitl.pth?download=true',
+            'path': os.path.join(local_dir, 'depth', 'depth_anything_v2_vitl.pth')
         }
     }
     

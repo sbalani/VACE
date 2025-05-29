@@ -39,7 +39,8 @@ class DepthVideoAnnotator(DepthAnnotator):
 class DepthV2Annotator:
     def __init__(self, cfg, device=None):
         from .depth_anything_v2.dpt import DepthAnythingV2
-        pretrained_model = cfg['PRETRAINED_MODEL']
+        models = ensure_annotator_models_downloaded()
+        pretrained_model = models['depth_anything_v2']
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else device
         self.model = DepthAnythingV2(encoder='vitl', features=256, out_channels=[256, 512, 1024, 1024]).to(self.device)
         self.model.load_state_dict(
