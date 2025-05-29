@@ -38,53 +38,6 @@ def ensure_model_downloaded(model_name="Wan-AI/Wan2.1-VACE-14B", local_dir="mode
     
     return local_dir
 
-def ensure_midas_model_downloaded(local_dir="models/VACE-Annotators/depth"):
-    """
-    Ensures the MiDaS model is downloaded to the local directory.
-    If the model already exists, it will not download again.
-    
-    Args:
-        local_dir (str): Local directory to save the model to
-        
-    Returns:
-        str: Path to the local model file
-    """
-    # Convert to absolute path if relative
-    if not os.path.isabs(local_dir):
-        # Check if we're in a workspace environment
-        if os.path.exists('/workspace'):
-            base_dir = '/workspace'
-        else:
-            base_dir = os.getcwd()
-        local_dir = os.path.join(base_dir, local_dir)
-    
-    model_file = os.path.join(local_dir, "dpt_hybrid-midas-501f0c75.pt")
-    
-    if not os.path.exists(model_file):
-        print(f"MiDaS model not found at {model_file}. Downloading...")
-        os.makedirs(local_dir, exist_ok=True)
-        
-        url = "https://huggingface.co/lllyasviel/ControlNet/resolve/main/annotator/ckpts/dpt_hybrid-midas-501f0c75.pt"
-        response = requests.get(url, stream=True)
-        total_size = int(response.headers.get('content-length', 0))
-        
-        with open(model_file, 'wb') as f, tqdm(
-            desc="Downloading MiDaS model",
-            total=total_size,
-            unit='iB',
-            unit_scale=True,
-            unit_divisor=1024,
-        ) as pbar:
-            for data in response.iter_content(chunk_size=1024):
-                size = f.write(data)
-                pbar.update(size)
-        
-        print(f"Download complete! Model saved to {model_file}")
-    else:
-        print(f"MiDaS model already exists at {model_file}")
-    
-    return model_file
-
 def ensure_annotator_models_downloaded(local_dir="models/VACE-Annotators"):
     """
     Ensures all annotator models are downloaded to the local directory.
@@ -125,6 +78,10 @@ def ensure_annotator_models_downloaded(local_dir="models/VACE-Annotators"):
         'flow': {
             'url': 'https://huggingface.co/sbalani/raft-things/resolve/main/raft-things.pth?download=true',
             'path': os.path.join(local_dir, 'flow', 'raft-things.pth')
+        },
+        'midas': {
+            'url': 'https://huggingface.co/lllyasviel/ControlNet/resolve/main/annotator/ckpts/dpt_hybrid-midas-501f0c75.pt',
+            'path': os.path.join(local_dir, 'depth', 'dpt_hybrid-midas-501f0c75.pt')
         }
     }
     
