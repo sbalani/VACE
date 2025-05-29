@@ -19,7 +19,7 @@ def ensure_model_downloaded(model_name="Wan-AI/Wan2.1-VACE-14B", local_dir="mode
     if not os.path.isabs(local_dir):
         # Check if we're in a workspace environment
         if os.path.exists('/workspace'):
-            base_dir = '/workspace'
+            base_dir = '/workspace/VACE'
         else:
             base_dir = os.getcwd()
         local_dir = os.path.join(base_dir, local_dir)
@@ -53,7 +53,7 @@ def ensure_annotator_models_downloaded(local_dir="models/VACE-Annotators"):
     if not os.path.isabs(local_dir):
         # Check if we're in a workspace environment
         if os.path.exists('/workspace'):
-            base_dir = '/workspace'
+            base_dir = '/workspace/VACE'
         else:
             base_dir = os.getcwd()
         local_dir = os.path.join(base_dir, local_dir)
