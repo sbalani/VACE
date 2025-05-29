@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.sep.join(os.path.realpath(__file__).split(os.path.sep
 import wan
 from vace.models.wan.wan_vace import WanVace, WanVaceMP
 from vace.models.wan.configs import WAN_CONFIGS, SIZE_CONFIGS
+from vace.model_utils import ensure_model_downloaded
 
 
 class FixedSizeQueue:
@@ -254,18 +255,6 @@ class VACEInference:
         self.refresh_button.click(lambda x: self.gallery_share_data.get() if self.gallery_share else x, inputs=[self.output_gallery], outputs=[self.output_gallery])
 
 
-def download_model(model_name="Wan-AI/Wan2.1-VACE-14B", local_dir="models/Wan2.1-VACE-14B"):
-    """Download model from HuggingFace to local directory."""
-    print(f"Downloading {model_name} to {local_dir}...")
-    os.makedirs(local_dir, exist_ok=True)
-    snapshot_download(
-        repo_id=model_name,
-        local_dir=local_dir,
-        local_dir_use_symlinks=False
-    )
-    print(f"Download complete! Model saved to {local_dir}")
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Argparser for VACE-WAN Demo:\n')
     parser.add_argument('--server_port', dest='server_port', help='', type=int, default=7860)
@@ -296,7 +285,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.download:
-        download_model(local_dir=args.ckpt_dir)
+        args.ckpt_dir = ensure_model_downloaded(local_dir=args.ckpt_dir)
 
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir, exist_ok=True)

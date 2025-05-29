@@ -25,6 +25,7 @@ from wan.text2video import (WanT2V, T5EncoderModel, WanVAE, shard_model, FlowDPM
                                get_sampling_sigmas, retrieve_timesteps, FlowUniPCMultistepScheduler)
 from .modules.model import VaceWanModel
 from ..utils.preprocessor import VaceVideoProcessor
+from ...model_utils import ensure_model_downloaded
 
 
 class WanVace(WanT2V):
@@ -60,6 +61,9 @@ class WanVace(WanT2V):
             t5_cpu (`bool`, *optional*, defaults to False):
                 Whether to place T5 model on CPU. Only works without t5_fsdp.
         """
+        # Ensure model is downloaded
+        checkpoint_dir = ensure_model_downloaded(local_dir=checkpoint_dir)
+        
         self.device = torch.device(f"cuda:{device_id}")
         self.config = config
         self.rank = rank
