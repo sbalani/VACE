@@ -38,92 +38,69 @@ def ensure_model_downloaded(model_name="Wan-AI/Wan2.1-VACE-14B", local_dir="mode
     
     return local_dir
 
-def ensure_annotator_models_downloaded(local_dir="models/VACE-Annotators"):
+def ensure_annotator_models_downloaded(local_dir_models_parent="models"):
     """
-    Ensures all annotator models are downloaded to the local directory.
-    If the models already exist, they will not download again.
+    Ensures all annotator models from ali-vilab/VACE-Annotators are downloaded.
+    The contents of the VACE-Annotators repo will be placed directly into the 'models' directory.
     
     Args:
-        local_dir (str): Local directory to save the models to. This should be the final target, e.g., models/VACE-Annotators
+        local_dir_models_parent (str): The directory where model subdirectories (depth, pose, etc.) will reside.
+                                     Typically "models".
         
     Returns:
-        str: Path to the local model directory (e.g., /workspace/VACE/models/VACE-Annotators)
+        str: Absolute path to the directory containing model subdirectories (e.g., /workspace/VACE/models)
     """
-    # Convert to absolute path if relative
-    if not os.path.isabs(local_dir):
-        # Check if we're in a workspace environment
+    # Resolve the absolute path for the directory that will contain /depth, /pose, etc.
+    if not os.path.isabs(local_dir_models_parent):
         if os.path.exists('/workspace'):
             base_dir = '/workspace/VACE'
         else:
             base_dir = os.getcwd()
-        final_target_dir = os.path.join(base_dir, local_dir) # e.g. /workspace/VACE/models/VACE-Annotators
+        actual_models_root_dir = os.path.join(base_dir, local_dir_models_parent) # e.g. /workspace/VACE/models
     else:
-        final_target_dir = local_dir
+        actual_models_root_dir = local_dir_models_parent
 
-    print(f"DEBUG: Final target directory for VACE-Annotators: {final_target_dir}")
-    os.makedirs(final_target_dir, exist_ok=True) # Ensure target directory exists
+    print(f"DEBUG: Root directory for annotator model subdirectories (depth, pose, etc.): {actual_models_root_dir}")
+    os.makedirs(actual_models_root_dir, exist_ok=True)
 
-    # Check for key model files to see if already downloaded in the final target directory
+    # Check for key model files to see if they are already downloaded directly in actual_models_root_dir
     key_files = [
-        os.path.join(final_target_dir, 'depth', 'dpt_hybrid-midas-501f0c75.pt'),
-        os.path.join(final_target_dir, 'pose', 'yolox_l.onnx'),
-        os.path.join(final_target_dir, 'flow', 'raft-things.pth')
+        os.path.join(actual_models_root_dir, 'depth', 'dpt_hybrid-midas-501f0c75.pt'),
+        os.path.join(actual_models_root_dir, 'pose', 'yolox_l.onnx'),
+        os.path.join(actual_models_root_dir, 'flow', 'raft-things.pth')
     ]
     
     models_exist = all(os.path.exists(f) for f in key_files)
-    print(f"DEBUG: Key model files exist in {final_target_dir}: {models_exist}")
+    print(f"DEBUG: Key model files exist in {actual_models_root_dir}: {models_exist}")
     
     if not models_exist:
-        # Download to a temporary directory to avoid messing with final_target_dir if it exists partially
-        # The parent of final_target_dir is where we want snapshot_download to create its VACE-Annotators folder
-        download_parent_dir = os.path.dirname(final_target_dir) # e.g. /workspace/VACE/models
-
-        # Let snapshot_download create its own VACE-Annotators directory inside download_parent_dir
-        print(f"VACE-Annotators models not found in {final_target_dir}. Downloading...")
-        print(f"DEBUG: Calling snapshot_download to download into: {download_parent_dir}")
+        print(f"VACE-Annotators models not found in {actual_models_root_dir}. Downloading...")
+        # snapshot_download will place contents of VACE-Annotators repo directly into actual_models_root_dir
+        print(f"DEBUG: Calling snapshot_download to download VACE-Annotators repo contents into: {actual_models_root_dir}")
         
         snapshot_download(
             repo_id="ali-vilab/VACE-Annotators",
-            local_dir=download_parent_dir, 
+            local_dir=actual_models_root_dir, 
             local_dir_use_symlinks=False,
+            # ignore_patterns=["*.md", ".git*"], # Example: ignore non-model files
         )
-        print(f"Download complete! snapshot_download placed files in {download_parent_dir}")
+        print(f"Download complete! snapshot_download placed VACE-Annotators repo contents into {actual_models_root_dir}")
 
-        # snapshot_download creates a subdirectory named after the repo, so models are in download_parent_dir/VACE-Annotators
-        downloaded_vace_annotators_path = os.path.join(download_parent_dir, "VACE-Annotators")
-
-        # If the final_target_dir is NOT the same as where snapshot_download put them, we might have a problem or a misunderstanding.
-        # However, given our setup, final_target_dir (e.g., .../models/VACE-Annotators) 
-        # IS EQUIVALENT to downloaded_vace_annotators_path (e.g., .../models/VACE-Annotators)
-        # So, no move is strictly necessary if snapshot_download behaves as expected.
-        # The key is that final_target_dir should now contain the models.
-
-        if not os.path.exists(downloaded_vace_annotators_path):
-             print(f"ERROR: snapshot_download did not create the expected {downloaded_vace_annotators_path} directory.")
-             print(f"DEBUG: Contents of {download_parent_dir}:")
-             if os.path.exists(download_parent_dir):
-                for item in os.listdir(download_parent_dir):
-                    print(f"  {item}")
-             # No further action, will rely on the key_files check later
-        else:
-            # This check is mainly to ensure the logic is sound. If final_target_dir is indeed where snapshot_download placed it, this is redundant.
-            if downloaded_vace_annotators_path != final_target_dir:
-                print(f"WARNING: Download path {downloaded_vace_annotators_path} differs from target {final_target_dir}. This might indicate an issue.")
-                # This would be the place to move files if snapshot_download behaved unexpectedly, 
-                # but the expectation is that it places them in final_target_dir due to local_dir=download_parent_dir
-                # and it creating a VACE-Annotators subdirectory.
-
-        # Verify the download created the expected files in the final_target_dir
+        # Verify the download created the expected files
         if not all(os.path.exists(f) for f in key_files):
-            print(f"ERROR: Download did not result in expected files in {final_target_dir} after download and processing.")
+            print(f"ERROR: Download did not result in expected files in {actual_models_root_dir}.")
+            print(f"DEBUG: Contents of {actual_models_root_dir} after download attempt:")
+            if os.path.exists(actual_models_root_dir):
+                for item in os.listdir(actual_models_root_dir):
+                    print(f"  {item}")
     else:
-        print(f"VACE-Annotators models already exist at {final_target_dir}")
+        print(f"VACE-Annotators models (contents) already exist in {actual_models_root_dir}")
 
     # Final confirmation of contents
-    print(f"DEBUG: Final contents of {final_target_dir}:")
-    if os.path.exists(final_target_dir):
-        for item in os.listdir(final_target_dir):
-            item_path = os.path.join(final_target_dir, item)
+    print(f"DEBUG: Final contents of {actual_models_root_dir}:")
+    if os.path.exists(actual_models_root_dir):
+        for item in os.listdir(actual_models_root_dir):
+            item_path = os.path.join(actual_models_root_dir, item)
             if os.path.isdir(item_path):
                 print(f"  DIR: {item}")
                 try:
@@ -134,9 +111,9 @@ def ensure_annotator_models_downloaded(local_dir="models/VACE-Annotators"):
             else:
                 print(f"  FILE: {item}")
     else:
-        print(f"DEBUG: {final_target_dir} does not exist after all operations.")
+        print(f"DEBUG: {actual_models_root_dir} does not exist after all operations.")
 
-    return final_target_dir
+    return actual_models_root_dir # This is the directory containing depth/, pose/, etc.
 
 def debug_check_model_path(model_path: str, model_name: str = "Model"):
     """
