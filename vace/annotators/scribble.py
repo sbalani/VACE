@@ -6,9 +6,9 @@ import torch.nn as nn
 from einops import rearrange
 import cv2
 import os
+import sys
 
 from .utils import convert_to_torch, convert_to_numpy, resize_image, resize_image_ori
-from .pidinet.model import pidinet
 from ..model_utils import ensure_annotator_models_downloaded, debug_check_model_path
 
 norm_layer = nn.InstanceNorm2d
@@ -144,12 +144,20 @@ class ScribbleVideoAnnotator(ScribbleAnnotator):
 
 class ScribbleGen:
     def __init__(self, cfg, device=None):
+        models_base_dir = ensure_annotator_models_downloaded()
+        pidinet_parent_dir = os.path.join(models_base_dir, 'scribble')
+
+        sys.path.insert(0, pidinet_parent_dir)
+        try:
+            from pidinet.model import pidinet
+        finally:
+            sys.path.pop(0)
+
         pretrained_model_name = cfg.get('PRETRAINED_MODEL_NAME', 'table5_pidinet.pth')
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else device
         self.model = pidinet(pretrained_model_name, dil=cfg.get('DIL', 24), sag=cfg.get('SAG', False)).to(self.device)
         
-        models_dir = ensure_annotator_models_downloaded()
-        pretrained_model_path = os.path.join(models_dir, 'scribble', pretrained_model_name)
+        pretrained_model_path = os.path.join(models_base_dir, 'scribble', pretrained_model_name)
         debug_check_model_path(pretrained_model_path, f"Scribble Model ({pretrained_model_name})")
 
         self.model.load_state_dict(torch.load(pretrained_model_path, map_location=self.device, weights_only=True))
