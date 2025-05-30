@@ -75,6 +75,22 @@ def ensure_annotator_models_downloaded(local_dir="models"):
             local_dir_use_symlinks=False
         )
         print(f"Download complete! Models saved to {local_dir}")
+        
+        # Debug: Show what's actually in the downloaded directory
+        print(f"DEBUG: Contents of {local_dir}:")
+        if os.path.exists(local_dir):
+            for item in os.listdir(local_dir):
+                item_path = os.path.join(local_dir, item)
+                if os.path.isdir(item_path):
+                    print(f"  DIR: {item}")
+                    # Show subdirectories too
+                    try:
+                        for subitem in os.listdir(item_path):
+                            print(f"    {subitem}")
+                    except:
+                        pass
+                else:
+                    print(f"  FILE: {item}")
     else:
         print(f"VACE-Annotators models already exist at {vace_annotators_dir}")
     
