@@ -154,13 +154,14 @@ class ScribbleGen:
             sys.path.pop(0)
 
         pretrained_model_name = cfg.get('PRETRAINED_MODEL_NAME', 'table5_pidinet.pth')
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else device
-        self.model = pidinet(pretrained_model_name, dil=cfg.get('DIL', 24), sag=cfg.get('SAG', False)).to(self.device)
-        
-        pretrained_model_path = os.path.join(models_base_dir, 'scribble', pretrained_model_name)
-        debug_check_model_path(pretrained_model_path, f"Scribble Model ({pretrained_model_name})")
+        absolute_pretrained_model_path = os.path.join(models_base_dir, 'scribble', pretrained_model_name)
+        debug_check_model_path(absolute_pretrained_model_path, f"Scribble Model for pidinet constructor ({pretrained_model_name})")
 
-        self.model.load_state_dict(torch.load(pretrained_model_path, map_location=self.device, weights_only=True))
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else device
+        self.model = pidinet(absolute_pretrained_model_path, dil=cfg.get('DIL', 24), sag=cfg.get('SAG', False)).to(self.device)
+        
+        debug_check_model_path(absolute_pretrained_model_path, f"Scribble Model for load_state_dict ({pretrained_model_name})")
+        self.model.load_state_dict(torch.load(absolute_pretrained_model_path, map_location=self.device, weights_only=True))
         self.model.eval()
         self.resize_size = cfg.get("RESIZE_SIZE", 512)
 
