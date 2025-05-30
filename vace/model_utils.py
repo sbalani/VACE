@@ -38,7 +38,7 @@ def ensure_model_downloaded(model_name="Wan-AI/Wan2.1-VACE-14B", local_dir="mode
     
     return local_dir
 
-def ensure_annotator_models_downloaded(local_dir="models/VACE-Annotators"):
+def ensure_annotator_models_downloaded(local_dir="models"):
     """
     Ensures all annotator models are downloaded to the local directory.
     If the models already exist, they will not download again.
