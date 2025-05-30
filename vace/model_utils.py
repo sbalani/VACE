@@ -73,13 +73,45 @@ def ensure_annotator_models_downloaded(local_dir="models"):
     if not models_exist:
         print(f"VACE-Annotators models not found. Downloading...")
         os.makedirs(local_dir, exist_ok=True)
+        print(f"DEBUG: Downloading to: {local_dir}")
         snapshot_download(
             repo_id="ali-vilab/VACE-Annotators",
             local_dir=local_dir,
             local_dir_use_symlinks=False
         )
         print(f"Download complete! Models saved to {local_dir}")
+        
+        # Print contents of the directory after download
+        print(f"DEBUG: Contents of {local_dir}:")
+        if os.path.exists(local_dir):
+            for item in os.listdir(local_dir):
+                item_path = os.path.join(local_dir, item)
+                if os.path.isdir(item_path):
+                    print(f"  DIR: {item}")
+                    # Show subdirectories too
+                    try:
+                        for subitem in os.listdir(item_path):
+                            print(f"    {subitem}")
+                    except:
+                        pass
+                else:
+                    print(f"  FILE: {item}")
     else:
         print(f"VACE-Annotators models already exist at {local_dir}")
+        # Print contents even if models exist
+        print(f"DEBUG: Contents of {local_dir}:")
+        if os.path.exists(local_dir):
+            for item in os.listdir(local_dir):
+                item_path = os.path.join(local_dir, item)
+                if os.path.isdir(item_path):
+                    print(f"  DIR: {item}")
+                    # Show subdirectories too
+                    try:
+                        for subitem in os.listdir(item_path):
+                            print(f"    {subitem}")
+                    except:
+                        pass
+                else:
+                    print(f"  FILE: {item}")
     
     return local_dir 
