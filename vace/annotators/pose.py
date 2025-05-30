@@ -9,7 +9,7 @@ import numpy as np
 from .dwpose import util
 from .dwpose.wholebody import Wholebody, HWC3, resize_image
 from .utils import convert_to_numpy, resize_image_ori
-from ..model_utils import ensure_annotator_models_downloaded
+from ..model_utils import ensure_annotator_models_downloaded, debug_check_model_path
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -37,9 +37,13 @@ class PoseAnnotator:
     def __init__(self, cfg):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         models_dir = ensure_annotator_models_downloaded()
+        onnx_det_path = os.path.join(models_dir, 'pose', 'yolox_l.onnx')
+        onnx_pose_path = os.path.join(models_dir, 'pose', 'dw-ll_ucoco_384.onnx')
+        debug_check_model_path(onnx_det_path, "DWPose Detector")
+        debug_check_model_path(onnx_pose_path, "DWPose Estimator")
         self.pose_estimation = Wholebody(
-            onnx_det=os.path.join(models_dir, 'VACE-Annotators', 'pose', 'yolox_l.onnx'),
-            onnx_pose=os.path.join(models_dir, 'VACE-Annotators', 'pose', 'dw-ll_ucoco_384.onnx'),
+            onnx_det=onnx_det_path,
+            onnx_pose=onnx_pose_path,
             device=self.device
         )
         self.resize_size = cfg.get("RESIZE_SIZE", 1024)
