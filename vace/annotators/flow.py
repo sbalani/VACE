@@ -6,7 +6,7 @@ import argparse
 import os
 
 from .utils import convert_to_numpy
-from ..model_utils import ensure_annotator_models_downloaded
+from ..model_utils import ensure_annotator_models_downloaded, debug_check_model_path
 
 class FlowAnnotator:
     def __init__(self, cfg, device=None):
@@ -26,7 +26,8 @@ class FlowAnnotator:
         }
         params = argparse.Namespace(**params)
         models_dir = ensure_annotator_models_downloaded()
-        pretrained_model = os.path.join(models_dir, 'VACE-Annotators', 'flow', 'raft-things.pth')
+        pretrained_model = os.path.join(models_dir, 'flow', 'raft-things.pth')
+        debug_check_model_path(pretrained_model, "RAFT Flow")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else device
         self.model = RAFT(params)
         self.model.load_state_dict({k.replace('module.', ''): v for k, v in torch.load(pretrained_model, map_location="cpu", weights_only=True).items()})

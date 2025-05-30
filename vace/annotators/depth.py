@@ -7,13 +7,14 @@ from einops import rearrange
 
 from .utils import convert_to_numpy, resize_image, resize_image_ori
 from .midas.api import MiDaSInference
-from ..model_utils import ensure_annotator_models_downloaded
+from ..model_utils import ensure_annotator_models_downloaded, debug_check_model_path
 
 class DepthAnnotator:
     def __init__(self, cfg):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         models_dir = ensure_annotator_models_downloaded()
-        pretrained_model = os.path.join(models_dir, 'VACE-Annotators', 'depth', 'dpt_hybrid-midas-501f0c75.pt')
+        pretrained_model = os.path.join(models_dir, 'depth', 'dpt_hybrid-midas-501f0c75.pt')
+        debug_check_model_path(pretrained_model, "MiDaS Depth")
         self.model = MiDaSInference(model_type='dpt_hybrid', model_path=pretrained_model).to(self.device)
         self.model.eval()
         self.a = cfg.get('A', np.pi * 2.0)
@@ -41,7 +42,8 @@ class DepthV2Annotator:
     def __init__(self, cfg, device=None):
         from .depth_anything_v2.dpt import DepthAnythingV2
         models_dir = ensure_annotator_models_downloaded()
-        pretrained_model = os.path.join(models_dir, 'VACE-Annotators', 'depth', 'depth_anything_v2_vitl.pth')
+        pretrained_model = os.path.join(models_dir, 'depth', 'depth_anything_v2_vitl.pth')
+        debug_check_model_path(pretrained_model, "Depth Anything V2")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else device
         self.model = DepthAnythingV2(encoder='vitl', features=256, out_channels=[256, 512, 1024, 1024]).to(self.device)
         self.model.load_state_dict(
