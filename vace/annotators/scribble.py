@@ -4,8 +4,12 @@ import numpy as np
 import torch
 import torch.nn as nn
 from einops import rearrange
+import cv2
+import os
 
-from .utils import convert_to_torch
+from .utils import convert_to_torch, convert_to_numpy, resize_image, resize_image_ori
+from .pidinet.model import pidinet
+from ..model_utils import ensure_annotator_models_downloaded, debug_check_model_path
 
 norm_layer = nn.InstanceNorm2d
 
@@ -136,3 +140,24 @@ class ScribbleVideoAnnotator(ScribbleAnnotator):
             anno_frame = super().forward(np.array(frame))
             ret_frames.append(anno_frame)
         return ret_frames
+
+
+class ScribbleGen:
+    def __init__(self, cfg, device=None):
+        pretrained_model_name = cfg.get('PRETRAINED_MODEL_NAME', 'table5_pidinet.pth')
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else device
+        self.model = pidinet(pretrained_model_name, dil=cfg.get('DIL', 24), sag=cfg.get('SAG', False)).to(self.device)
+        
+        models_dir = ensure_annotator_models_downloaded()
+        pretrained_model_path = os.path.join(models_dir, 'scribble', pretrained_model_name)
+        debug_check_model_path(pretrained_model_path, f"Scribble Model ({pretrained_model_name})")
+
+        self.model.load_state_dict(torch.load(pretrained_model_path, map_location=self.device, weights_only=True))
+        self.model.eval()
+        self.resize_size = cfg.get("RESIZE_SIZE", 512)
+
+
+class ScribbleAnimeGen(ScribbleGen):
+    def __init__(self, cfg, device=None):
+        cfg['PRETRAINED_MODEL_NAME'] = 'anime_style/netG_A_latest.pth'
+        super().__init__(cfg, device)
