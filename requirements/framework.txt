@@ -1,3 +1,6 @@
+# This took me a long time to put together. Please consider supporting me on Patreon (@https://www.patreon.com/c/EndangeredAI ) or BuymeaCoffee (@https://buymeacoffee.com/endangered )
+# Also check out my youtube tutorials on youtube.com/@endangeredai (Wan Video coming soon)
+
 torch>=2.5.1
 torchvision>=0.20.1
 opencv-python>=4.9.0.80

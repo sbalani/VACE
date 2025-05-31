@@ -64,6 +64,11 @@ class VACEInference:
                     <div style="text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 15px;">
                         <a href="https://ali-vilab.github.io/VACE-Page/" style="text-decoration: none; color: inherit;">VACE-WAN Demo</a>
                     </div>
+                    <div style="text-align: center; margin-bottom: 20px; padding: 10px; background-color: #f0f0f0; border-radius: 5px;">
+                        <p style="margin: 5px 0;">This took me a long time to put together. Please consider supporting me on:</p>
+                        <p style="margin: 5px 0;"><a href="https://www.patreon.com/c/EndangeredAI" target="_blank">Patreon</a> or <a href="https://buymeacoffee.com/endangered" target="_blank">Buy Me a Coffee</a></p>
+                        <p style="margin: 5px 0;">Check out my tutorials on <a href="https://youtube.com/@endangeredai" target="_blank">YouTube</a> (Wan Video coming soon)</p>
+                    </div>
                     """)
         with gr.Row(variant='panel', equal_height=True):
             with gr.Column(scale=1, min_width=0):
