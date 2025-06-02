@@ -198,9 +198,6 @@ def main(args):
     args = argparse.Namespace(**args) if isinstance(args, dict) else args
     args = validate_args(args)
 
-    # Ensure model is downloaded before proceeding
-    args.ckpt_dir = ensure_model_downloaded(local_dir=args.ckpt_dir)
-
     rank = int(os.getenv("RANK", 0))
     world_size = int(os.getenv("WORLD_SIZE", 1))
     local_rank = int(os.getenv("LOCAL_RANK", 0))

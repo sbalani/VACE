@@ -61,9 +61,6 @@ class WanVace(WanT2V):
             t5_cpu (`bool`, *optional*, defaults to False):
                 Whether to place T5 model on CPU. Only works without t5_fsdp.
         """
-        # Ensure model is downloaded
-        checkpoint_dir = ensure_model_downloaded(local_dir=checkpoint_dir)
-        
         self.device = torch.device(f"cuda:{device_id}")
         self.config = config
         self.rank = rank
