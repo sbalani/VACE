@@ -276,16 +276,8 @@ if __name__ == '__main__':
         action="store_true",
         help="Offloading unnecessary computations to CPU.",
     )
-    parser.add_argument(
-        "--download",
-        action="store_true",
-        help="Download the model from HuggingFace if not present locally.",
-    )
 
     args = parser.parse_args()
-
-    if args.download:
-        args.ckpt_dir = ensure_model_downloaded(local_dir=args.ckpt_dir)
 
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir, exist_ok=True)
