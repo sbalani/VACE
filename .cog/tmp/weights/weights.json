@@ -1,0 +1,224 @@
+[
+  {
+    "path": "models/VACE-Annotators/depth/depth_anything_v2_vitl.pth",
+    "digest": "a7ea19fa0ed99244e67b624c72b8580b7e9553043245905be58796a608eb9345",
+    "timestamp": "2025-06-01T11:23:21.702394836+02:00",
+    "size": 1341395338
+  },
+  {
+    "path": "models/VACE-Annotators/depth/dpt_hybrid-midas-501f0c75.pt",
+    "digest": "501f0c75b3bca7daec6b3682c5054c09b366765aef6fa3a09d03a5cb4b230853",
+    "timestamp": "2025-06-01T11:22:43.364621794+02:00",
+    "size": 492757791
+  },
+  {
+    "path": "models/VACE-Annotators/face/models/antelopev2/1k3d68.onnx",
+    "digest": "df5c06b8a0c12e422b2ed8947b8869faa4105387f199c477af038aa01f9a45cc",
+    "timestamp": "2025-06-01T11:22:27.153717771+02:00",
+    "size": 143607619
+  },
+  {
+    "path": "models/VACE-Annotators/face/models/antelopev2/2d106det.onnx",
+    "digest": "f001b856447c413801ef5c42091ed0cd516fcd21f2d6b79635b1e733a7109dbf",
+    "timestamp": "2025-06-01T11:22:20.796755407+02:00",
+    "size": 5030888
+  },
+  {
+    "path": "models/VACE-Annotators/face/models/antelopev2/genderage.onnx",
+    "digest": "4fde69b1c810857b88c64a335084f1c3fe8f01246c9a191b48c7bb756d6652fb",
+    "timestamp": "2025-06-01T11:22:20.997754217+02:00",
+    "size": 1322532
+  },
+  {
+    "path": "models/VACE-Annotators/face/models/antelopev2/glintr100.onnx",
+    "digest": "4ab1d6435d639628a6f3e5008dd4f929edf4c4124b1a7169e1048f9fef534cdf",
+    "timestamp": "2025-06-01T11:22:31.84269001+02:00",
+    "size": 260665334
+  },
+  {
+    "path": "models/VACE-Annotators/face/models/antelopev2/scrfd_10g_bnkps.onnx",
+    "digest": "5838f7fe053675b1c7a08b633df49e7af5495cee0493c7dcf6697200b85b5b91",
+    "timestamp": "2025-06-01T11:22:21.818749357+02:00",
+    "size": 16923827
+  },
+  {
+    "path": "models/VACE-Annotators/flow/raft-things.pth",
+    "digest": "fcfa4125d6418f4de95d84aec20a3c5f4e205101715a79f193243c186ac9a7e1",
+    "timestamp": "2025-06-01T11:22:21.968748469+02:00",
+    "size": 21108000
+  },
+  {
+    "path": "models/VACE-Annotators/gdino/bert-base-uncased/flax_model.msgpack",
+    "digest": "ea201fabe466ef7182f1f687fb5be4b62a73d3a78883f11264ff7f682cdb54bf",
+    "timestamp": "2025-06-01T11:23:55.850192663+02:00",
+    "size": 438064459
+  },
+  {
+    "path": "models/VACE-Annotators/gdino/bert-base-uncased/model.safetensors",
+    "digest": "68d45e234eb4a928074dfd868cead0219ab85354cc53d20e772753c6bb9169d3",
+    "timestamp": "2025-06-01T11:22:44.312616182+02:00",
+    "size": 440449768
+  },
+  {
+    "path": "models/VACE-Annotators/gdino/bert-base-uncased/pytorch_model.bin",
+    "digest": "097417381d6c7230bd9e3557456d726de6e83245ec8b24f529f60198a67b203a",
+    "timestamp": "2025-06-01T11:24:01.029162001+02:00",
+    "size": 440473133
+  },
+  {
+    "path": "models/VACE-Annotators/gdino/bert-base-uncased/rust_model.ot",
+    "digest": "afd9aa425fd45c5655d3d43a0d041f9b76729bf475d6c017a0e9304a38f89972",
+    "timestamp": "2025-06-01T11:22:45.058611765+02:00",
+    "size": 534240408
+  },
+  {
+    "path": "models/VACE-Annotators/gdino/bert-base-uncased/tf_model.h5",
+    "digest": "a7a17d6d844b5de815ccab5f42cad6d24496db3850a2a43d8258221018ce87d2",
+    "timestamp": "2025-06-01T11:23:31.843334796+02:00",
+    "size": 536063208
+  },
+  {
+    "path": "models/VACE-Annotators/gdino/groundingdino_swint_ogc.pth",
+    "digest": "3b3ca2563c77c69f651d7bd133e97139c186df06231157a64c507099c52bc799",
+    "timestamp": "2025-06-01T11:23:08.273474342+02:00",
+    "size": 693997677
+  },
+  {
+    "path": "models/VACE-Annotators/llm/Qwen2.5-3B-Instruct/model-00001-of-00002.safetensors",
+    "digest": "67347b23fb4165b652eb6611f5e1f2a06dfcddba8e909df1b2b0b1857bee06c2",
+    "timestamp": "2025-06-01T11:24:46.860890653+02:00",
+    "size": 3968658944
+  },
+  {
+    "path": "models/VACE-Annotators/llm/Qwen2.5-3B-Instruct/model-00002-of-00002.safetensors",
+    "digest": "a40d941d0e7e0b966ad8b62bb6d6b7c88cce1299197b599d9d0a4ce59aabfc1d",
+    "timestamp": "2025-06-01T11:24:49.491875077+02:00",
+    "size": 2203268048
+  },
+  {
+    "path": "models/VACE-Annotators/pose/dw-ll_ucoco_384.onnx",
+    "digest": "724f4ff2439ed61afb86fb8a1951ec39c6220682803b4a8bd4f598cd913b1843",
+    "timestamp": "2025-06-01T11:23:03.99549967+02:00",
+    "size": 134399116
+  },
+  {
+    "path": "models/VACE-Annotators/pose/yolox_l.onnx",
+    "digest": "7860ae79de6c89a3c1eb72ae9a2756c0ccfbe04b7791bb5880afabd97855a411",
+    "timestamp": "2025-06-01T11:23:13.618442697+02:00",
+    "size": 216746733
+  },
+  {
+    "path": "models/VACE-Annotators/ram/bert-base-uncased/flax_model.msgpack",
+    "digest": "ea201fabe466ef7182f1f687fb5be4b62a73d3a78883f11264ff7f682cdb54bf",
+    "timestamp": "2025-06-01T11:23:24.390378922+02:00",
+    "size": 438064459
+  },
+  {
+    "path": "models/VACE-Annotators/ram/bert-base-uncased/model.safetensors",
+    "digest": "68d45e234eb4a928074dfd868cead0219ab85354cc53d20e772753c6bb9169d3",
+    "timestamp": "2025-06-01T11:23:36.361308047+02:00",
+    "size": 440449768
+  },
+  {
+    "path": "models/VACE-Annotators/ram/bert-base-uncased/pytorch_model.bin",
+    "digest": "097417381d6c7230bd9e3557456d726de6e83245ec8b24f529f60198a67b203a",
+    "timestamp": "2025-06-01T11:23:38.066297953+02:00",
+    "size": 440473133
+  },
+  {
+    "path": "models/VACE-Annotators/ram/bert-base-uncased/rust_model.ot",
+    "digest": "afd9aa425fd45c5655d3d43a0d041f9b76729bf475d6c017a0e9304a38f89972",
+    "timestamp": "2025-06-01T11:23:41.684276532+02:00",
+    "size": 534240408
+  },
+  {
+    "path": "models/VACE-Annotators/ram/bert-base-uncased/tf_model.h5",
+    "digest": "a7a17d6d844b5de815ccab5f42cad6d24496db3850a2a43d8258221018ce87d2",
+    "timestamp": "2025-06-01T11:24:23.543028707+02:00",
+    "size": 536063208
+  },
+  {
+    "path": "models/VACE-Annotators/ram/ram_plus_swin_large_14m.pth",
+    "digest": "497c178836ba66698ca226c7895317e6e800034be986452dbd2593298d50e87d",
+    "timestamp": "2025-06-01T11:25:06.073776904+02:00",
+    "size": 3010210801
+  },
+  {
+    "path": "models/VACE-Annotators/salient/u2net.pt",
+    "digest": "10025a17f49cd3208afc342b589890e402ee63123d6f2d289a4a0903695cce58",
+    "timestamp": "2025-06-01T11:23:48.286237445+02:00",
+    "size": 176290937
+  },
+  {
+    "path": "models/VACE-Annotators/sam/sam_vit_b_01ec64.pth",
+    "digest": "ec2df62732614e57411cdcf32a23ffdf28910380d03139ee0f4fcbe91eb8c912",
+    "timestamp": "2025-06-01T11:23:56.388189478+02:00",
+    "size": 375042383
+  },
+  {
+    "path": "models/VACE-Annotators/sam2/sam2.1_hiera_large.pt",
+    "digest": "2647878d5dfa5098f2f8649825738a9345572bae2d4350a2468587ece47dd318",
+    "timestamp": "2025-06-01T11:24:10.534105726+02:00",
+    "size": 898083611
+  },
+  {
+    "path": "models/VACE-Annotators/scribble/anime_style/netG_A_latest.pth",
+    "digest": "c686ced2a666b4850b4bb6ccf0748031c3eda9f822de73a34b8979970d90f0c6",
+    "timestamp": "2025-06-01T11:23:57.080185381+02:00",
+    "size": 17173511
+  },
+  {
+    "path": "models/Wan2.1-VACE-14B/Wan2.1_VAE.pth",
+    "digest": "38071ab59bd94681c686fa51d75a1968f64e470262043be31f7a094e442fd981",
+    "timestamp": "2025-06-01T11:28:19.014634607+02:00",
+    "size": 507609880
+  },
+  {
+    "path": "models/Wan2.1-VACE-14B/diffusion_pytorch_model-00001-of-00007.safetensors",
+    "digest": "569d54a07279b89f8281421fccf27ee2459ea853ce6845d3536b8664b0070078",
+    "timestamp": "2025-06-01T11:38:52.990881206+02:00",
+    "size": 9887603256
+  },
+  {
+    "path": "models/Wan2.1-VACE-14B/diffusion_pytorch_model-00002-of-00007.safetensors",
+    "digest": "b17ff172f262b4da91c31e8c46d3b7707f62cecfff6e18dd0072ab29eb350e46",
+    "timestamp": "2025-06-01T11:38:43.91493494+02:00",
+    "size": 9839059648
+  },
+  {
+    "path": "models/Wan2.1-VACE-14B/diffusion_pytorch_model-00003-of-00007.safetensors",
+    "digest": "741fd1508cd0288f0bb0f4fb3df6734da521d5ff23746170c848564a367e2cea",
+    "timestamp": "2025-06-01T11:34:29.610440539+02:00",
+    "size": 9839059744
+  },
+  {
+    "path": "models/Wan2.1-VACE-14B/diffusion_pytorch_model-00004-of-00007.safetensors",
+    "digest": "47b08ba289b127fc64979bc877ee07e1c87aeb8eb8cd47bcfd112682847981ba",
+    "timestamp": "2025-06-01T11:34:57.878273179+02:00",
+    "size": 9839059744
+  },
+  {
+    "path": "models/Wan2.1-VACE-14B/diffusion_pytorch_model-00005-of-00007.safetensors",
+    "digest": "29e35f4cf0e3a61f4726c960f1babf71d65677a8c99fe704257d665c9498ee88",
+    "timestamp": "2025-06-01T11:34:18.521506187+02:00",
+    "size": 9839059744
+  },
+  {
+    "path": "models/Wan2.1-VACE-14B/diffusion_pytorch_model-00006-of-00007.safetensors",
+    "digest": "91ac087a40b814331e87f5f015af11ba999275d48d2af49591b6bf7727d3c146",
+    "timestamp": "2025-06-01T11:37:48.979260187+02:00",
+    "size": 7910235256
+  },
+  {
+    "path": "models/Wan2.1-VACE-14B/diffusion_pytorch_model-00007-of-00007.safetensors",
+    "digest": "d2c107015cdef963cb8f9b7006330e7d7355ca648d90af32bcf80ed76d8eba1f",
+    "timestamp": "2025-06-01T11:37:17.208448287+02:00",
+    "size": 6098227760
+  },
+  {
+    "path": "models/Wan2.1-VACE-14B/models_t5_umt5-xxl-enc-bf16.pth",
+    "digest": "7cace0da2b446bbbbc57d031ab6cf163a3d59b366da94e5afe36745b746fd81d",
+    "timestamp": "2025-06-01T11:35:39.869024572+02:00",
+    "size": 11361920418
+  }
+]
