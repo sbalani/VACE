@@ -1,10 +1,5 @@
-# Core dependencies that need to be installed first
---extra-index-url https://download.pytorch.org/whl/cu124
-torch>=2.5.1
-torch-utils
 packaging>=25.0
-
-# Framework requirements
+torch>=2.5.1
 torchvision>=0.20.1
 opencv-python>=4.9.0.80
 diffusers>=0.31.0
@@ -19,7 +14,7 @@ easydict
 ftfy
 dashscope
 imageio-ffmpeg
-flash-attn @ git+https://github.com/Dao-AILab/flash-attention.git --global-option="--no-build-isolation"
+git+https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.0.0/flash_attn-2.7.4.post1+cu1241torch2.5.1-cp310-cp310-linux_x86_64.whl
 decord
 einops
 scikit-image
@@ -30,15 +25,10 @@ onnxruntime-gpu
 BeautifulSoup4
 huggingface_hub>=0.20.3
 xfuser>=0.4.1
-
-# Annotator requirements
 insightface
 git+https://github.com/facebookresearch/sam2.git
 git+https://github.com/facebookresearch/segment-anything.git
 git+https://github.com/IDEA-Research/GroundingDINO.git
 git+https://github.com/xinyu1205/recognize-anything.git
 git+https://github.com/martin-chobanyan-sdc/RAFT.git
-
-# Commented out for now
-# ltx-video@git+https://github.com/Lightricks/LTX-Video@ltx-video-0.9.1
 wan@git+https://github.com/Wan-Video/Wan2.1

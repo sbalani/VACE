@@ -7,6 +7,7 @@ import torch
 import tempfile
 import subprocess
 from typing import List, Optional
+from huggingface_hub import snapshot_download
 
 # VACE specific imports
 from vace.models.wan.configs import WAN_CONFIGS, SIZE_CONFIGS, SUPPORTED_SIZES
@@ -34,7 +35,15 @@ class Predictor(BasePredictor):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         
         os.makedirs("models", exist_ok=True)
-        os.makedirs("models/VACE-Annotators", exist_ok=True) # For annotator models if downloaded here
+        os.makedirs("models/VACE-Annotators", exist_ok=True)
+
+        # Download VACE-Annotators models from Hugging Face
+        print("Downloading VACE-Annotators models...")
+        snapshot_download(
+            repo_id="ali-vilab/VACE-Annotators",
+            local_dir="models/VACE-Annotators",
+            local_dir_use_symlinks=False
+        )
 
         # Download model files (T5, VAE) - these are common
         model_files = {
