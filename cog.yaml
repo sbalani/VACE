@@ -1,10 +1,10 @@
-# Configuration for Cog ⚙️
-# Reference: https://cog.run/yaml
-
+# ── cog.yaml ───────────────────────────────────────────────────────────────────
 build:
   gpu: true
   cuda: "12.4"
   python_version: "3.11"
+
+  # System packages you need for build (e.g. CUDA toolkit, ffmpeg, etc.)
   system_packages:
     - git
     - nvidia-cuda-toolkit
@@ -13,6 +13,23 @@ build:
     - libxext6
     - libxrender-dev
     - libglib2.0-0
+
+  # Stage 1: install “safe” requirements that do NOT pull in flash-attn
   python_requirements: requirements.txt
 
-predict: "predict.py:Predictor" 
+  # Stage 2: after stage 1 finishes, run these commands in order:
+  run:
+    # (a) Upgrade pip/setuptools/wheel so build isolation goes smoothly:
+    - "pip install --upgrade pip setuptools wheel"
+
+    # (b) Install build-time dependencies into this same environment:
+    - "pip install packaging ninja"
+
+    # (c) Now install flash-attn and its dependents all at once,
+    #     without build isolation, so packaging/ninja are available:
+    - "pip install flash-attn --no-build-isolation"
+    - "pip install wan@git+https://github.com/Wan-Video/Wan2.1.git --no-build-isolation"
+
+# Your normal predictor entrypoint:
+predict: "predict.py:Predictor"
+# ───────────────────────────────────────────────────────────────────────────────
