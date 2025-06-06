@@ -6,6 +6,8 @@ import os
 import torch
 import tempfile
 import subprocess
+import json
+import shutil
 from typing import List, Optional
 from huggingface_hub import snapshot_download
 
@@ -33,9 +35,25 @@ class Predictor(BasePredictor):
     def setup(self) -> None:
         """Load the model into memory to make running multiple predictions efficient"""
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.num_gpus = torch.cuda.device_count()
+        print(f"Detected {self.num_gpus} GPUs")
         
         os.makedirs("models", exist_ok=True)
         os.makedirs("models/VACE-Annotators", exist_ok=True)
+
+        # Try to add swap space (may fail on Replicate, but worth trying)
+        try:
+            print("Attempting to add swap space...")
+            subprocess.run(["sudo", "fallocate", "-l", "4G", "/tmp/swapfile"], check=False, capture_output=True)
+            subprocess.run(["sudo", "chmod", "600", "/tmp/swapfile"], check=False, capture_output=True)
+            subprocess.run(["sudo", "mkswap", "/tmp/swapfile"], check=False, capture_output=True)
+            result = subprocess.run(["sudo", "swapon", "/tmp/swapfile"], check=False, capture_output=True)
+            if result.returncode == 0:
+                print("Successfully added 4GB swap space")
+            else:
+                print("Could not add swap space (likely running in restricted environment)")
+        except Exception as e:
+            print(f"Swap space setup failed (expected in containerized environments): {e}")
 
         # Download VACE-Annotators models from Hugging Face
         print("Downloading VACE-Annotators models...")
@@ -60,21 +78,47 @@ class Predictor(BasePredictor):
                 print(f"Downloading {os.path.basename(filepath)}...")
                 subprocess.run(["wget", "-O", filepath, url], check=True)
         
-        # Download 14B model shards (example, adjust if using 1.3B or other models primarily)
-        # These are downloaded to models/Wan2.1-VACE-14B/
-        # The ckpt_dir for inference will point to "models/Wan2.1-VACE-14B"
-        # The self.vace_ckpt_name is relative to that directory.
-        
-        # Base model checkpoint directory and name for inference
-        # This will be selected based on user input for model_name_input
-        # self.ckpt_dir_base = "models" 
-        # self.vace_ckpt_name = "model.safetensors.index.json" # for 14B, or .pth for 1.3B
+        # Install flash-attention using pre-built wheel to avoid memory issues
+        try:
+            import flash_attn
+            print("flash-attn already installed")
+        except ImportError:
+            print("Installing flash-attn from pre-built wheel...")
+            flash_attn_wheel_url = "https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu12torch2.5cxx11abiTRUE-cp311-cp311-linux_x86_64.whl"
+            
+            # Set environment variable to limit compilation jobs (fallback if wheel install fails)
+            env = os.environ.copy()
+            env["MAX_JOBS"] = "1"
+            
+            try:
+                # Try pre-built wheel first
+                subprocess.run(["pip", "install", flash_attn_wheel_url], check=True, env=env)
+                print("Successfully installed flash-attn from pre-built wheel")
+            except subprocess.CalledProcessError:
+                print("Pre-built wheel failed, trying with compilation limits...")
+                try:
+                    # Fallback to source build with memory optimizations
+                    subprocess.run([
+                        "pip", "install", "flash-attn", 
+                        "--no-build-isolation",
+                        "--verbose"
+                    ], check=True, env=env)
+                    print("Successfully installed flash-attn from source")
+                except subprocess.CalledProcessError as e:
+                    print(f"flash-attn installation failed: {e}")
+                    print("Continuing without flash-attn (may impact performance)")
 
-        # Ensure VACE config paths are set correctly (already done by import)
-        # Update config to use local tokenizer path, relative to where the script using it runs
-        # vace_wan_inference.py and others might expect '.' to be <repo-root>/models/
-        # The setup in cog.yaml usually makes the repo root the CWD.
-        # If t5_tokenizer is expected to be 'models' by the underlying WanVace class:
+        # Install xfuser for multi-GPU acceleration if not already installed
+        try:
+            import xfuser
+            print("xfuser already installed")
+        except ImportError:
+            print("Installing xfuser for multi-GPU support...")
+            env = os.environ.copy()
+            env["MAX_JOBS"] = "1"  # Limit compilation jobs
+            subprocess.run(["pip", "install", "xfuser>=0.4.1"], check=True, env=env)
+
+        # Update config to use local tokenizer path
         for config_key in list(WAN_CONFIGS.keys()):
             config = WAN_CONFIGS[config_key]
             if hasattr(config, 't5_tokenizer'):
@@ -88,10 +132,117 @@ class Predictor(BasePredictor):
         
         # Import main functions from VACE scripts AFTER potential sys.path modifications or library setup
         from vace.vace_preproccess import main as preprocess_main
-        from vace.vace_wan_inference import main as inference_main
         self.preprocess_main = preprocess_main
-        self.inference_main = inference_main
 
+    def _get_distributed_config(self, model_name: str, num_gpus: int):
+        """Get the appropriate distributed configuration based on model and available GPUs"""
+        if model_name == "vace-1.3B":
+            # For 1.3B model: --ulysses_size 1 --ring_size N
+            return {
+                "ulysses_size": 1,
+                "ring_size": num_gpus,
+                "dit_fsdp": True,
+                "t5_fsdp": True
+            }
+        elif model_name == "vace-14B":
+            # For 14B model: --ulysses_size N --ring_size 1
+            return {
+                "ulysses_size": num_gpus,
+                "ring_size": 1, 
+                "dit_fsdp": True,
+                "t5_fsdp": True
+            }
+        else:
+            # Default configuration
+            return {
+                "ulysses_size": 1,
+                "ring_size": num_gpus,
+                "dit_fsdp": True,
+                "t5_fsdp": True
+            }
+
+    def _run_distributed_inference(self, inference_args_dict: dict, num_gpus: int) -> str:
+        """Run inference using torchrun for distributed execution"""
+        
+        # Create a temporary script to run the inference
+        temp_script_path = "/tmp/run_inference.py"
+        
+        # Create the inference script content
+        script_content = f'''
+import sys
+import os
+import json
+
+# Add current directory to path to import vace modules
+sys.path.insert(0, os.getcwd())
+
+from vace.vace_wan_inference import main as inference_main
+
+# Load arguments from environment or file
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--args_file", required=True)
+args = parser.parse_args()
+
+with open(args.args_file, 'r') as f:
+    inference_args = json.load(f)
+
+# Run inference
+try:
+    result = inference_main(inference_args)
+    print(f"Inference completed successfully: {{result}}")
+except Exception as e:
+    print(f"Inference failed: {{e}}")
+    raise
+'''
+        
+        # Write the script
+        with open(temp_script_path, 'w') as f:
+            f.write(script_content)
+        
+        # Save inference arguments to a JSON file
+        args_file = "/tmp/inference_args.json"
+        with open(args_file, 'w') as f:
+            json.dump(inference_args_dict, f, indent=2)
+        
+        # Build the torchrun command
+        torchrun_cmd = [
+            "torchrun",
+            f"--nproc_per_node={num_gpus}",
+            temp_script_path,
+            f"--args_file={args_file}"
+        ]
+        
+        print(f"Running distributed inference with command: {' '.join(torchrun_cmd)}")
+        
+        try:
+            # Run the distributed inference
+            result = subprocess.run(
+                torchrun_cmd,
+                capture_output=True,
+                text=True,
+                check=True,
+                cwd=os.getcwd()
+            )
+            
+            print("STDOUT:", result.stdout)
+            if result.stderr:
+                print("STDERR:", result.stderr)
+                
+            # Return the output video path from inference_args_dict
+            return inference_args_dict.get("save_file", "output.mp4")
+            
+        except subprocess.CalledProcessError as e:
+            print(f"Distributed inference failed with return code {e.returncode}")
+            print("STDOUT:", e.stdout)
+            print("STDERR:", e.stderr)
+            raise RuntimeError(f"Distributed inference failed: {e.stderr}")
+        finally:
+            # Clean up temporary files
+            if os.path.exists(temp_script_path):
+                os.remove(temp_script_path)
+            if os.path.exists(args_file):
+                os.remove(args_file)
 
     def predict(
         self,
@@ -115,6 +266,16 @@ class Predictor(BasePredictor):
             default=24, ge=1, le=60
         ),
         base_seed: int = Input(description="Random seed for generation", default=-1),
+        
+        # Multi-GPU Configuration
+        use_multi_gpu: bool = Input(
+            description="Use multi-GPU distributed inference (recommended for memory issues)",
+            default=True
+        ),
+        num_gpus_override: Optional[int] = Input(
+            description="Override number of GPUs to use (default: use all available)",
+            default=None, ge=1, le=8
+        ),
         
         # Inputs for vace_wan_inference.py (also used by pipeline if preprocess=False)
         input_video: Path = Input(description="Source video for video-to-video tasks or if preprocess=False.", default=None),
@@ -153,18 +314,18 @@ class Predictor(BasePredictor):
             default='plain', 
             choices=['plain', 'wan_zh', 'wan_en', 'wan_zh_ds', 'wan_en_ds'] # from vace_wan_inference
         ),
-        offload_model: Optional[bool] = Input(description="Offload model to CPU. Default: True for single GPU, False for multi.", default=None),
-        # Multi-GPU args - typically not set by user in Cog, defaults in script are fine
-        # ulysses_size: int = 1,
-        # ring_size: int = 1,
-        # t5_fsdp: bool = False,
-        # t5_cpu: bool = False,
-        # dit_fsdp: bool = False,
 
     ) -> Path:
         """Run a single prediction on the model"""
 
         temp_dir = tempfile.mkdtemp()
+        
+        # Determine number of GPUs to use
+        effective_num_gpus = num_gpus_override if num_gpus_override else self.num_gpus
+        if not use_multi_gpu:
+            effective_num_gpus = 1
+            
+        print(f"Using {effective_num_gpus} GPUs for inference")
         
         # --- Argument mapping for VACE scripts ---
         # Model name for WAN_CONFIGS and inference script
@@ -280,6 +441,9 @@ class Predictor(BasePredictor):
         output_video_filename = "final_output.mp4"
         inference_save_path = os.path.join(temp_dir, output_video_filename)
 
+        # Get distributed configuration
+        dist_config = self._get_distributed_config(model_name_for_scripts, effective_num_gpus)
+
         inference_args = {
             "model_name": model_name_for_scripts,
             "size": vace_size_key,
@@ -296,12 +460,12 @@ class Predictor(BasePredictor):
             "sample_guide_scale": sample_guide_scale,
             "use_prompt_extend": use_prompt_extend,
             "save_file": inference_save_path, # Direct output path
-            "offload_model": offload_model if offload_model is not None else (torch.cuda.device_count() <= 1),
-            # Other args like ulysses_size, ring_size, t5_fsdp will use defaults in vace_wan_inference.py
-            # Ensure sample_fps is passed if vace_wan_inference.py uses it for saving (it uses cfg.sample_fps)
+            "offload_model": False if use_multi_gpu else True, # Disable offload for multi-GPU
+            # Add distributed configuration
+            **dist_config
         }
         # Filter out None values for inference_args
-        inference_args_dict = {k: v for k, v in inference_args.items()if v is not None}
+        inference_args_dict = {k: v for k, v in inference_args.items() if v is not None}
         
         # Additional validation based on vace_wan_inference.py defaults if needed
         if 'sample_steps' not in inference_args_dict: # Set default based on inference script logic if desired
@@ -311,18 +475,20 @@ class Predictor(BasePredictor):
             # args.sample_shift = 16 (general default)
             inference_args_dict['sample_shift'] = 16
 
-
         print(f"Inference arguments: {inference_args_dict}")
+        
         try:
-            inference_output_data = self.inference_main(inference_args_dict)
-            # inference_main saves the video to 'save_file' and returns dict with 'out_video' path
-            if not inference_output_data or 'out_video' not in inference_output_data:
-                if os.path.exists(inference_save_path): # Fallback if dict is empty but file was saved
-                    print("Inference script did not return out_video path, but file exists at specified location.")
-                else:
-                    raise RuntimeError("Inference failed or did not produce an output video file.")
+            if use_multi_gpu and effective_num_gpus > 1:
+                print(f"Running distributed inference with {effective_num_gpus} GPUs")
+                output_path_str = self._run_distributed_inference(inference_args_dict, effective_num_gpus)
+            else:
+                print("Running single-GPU inference")
+                # Fallback to single GPU inference - import and call directly
+                from vace.vace_wan_inference import main as inference_main
+                inference_output_data = inference_main(inference_args_dict)
+                output_path_str = inference_output_data.get('out_video', inference_save_path)
             
-            output_path = Path(inference_output_data.get('out_video', inference_save_path))
+            output_path = Path(output_path_str)
             if not output_path.exists():
                  raise FileNotFoundError(f"Output video not found at {output_path}")
             print(f"Output video generated at: {output_path}")
