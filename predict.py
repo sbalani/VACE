@@ -152,11 +152,14 @@ class Predictor(BasePredictor):
         env = os.environ.copy()
         env.update({
             "NCCL_DEBUG": "INFO",
+            "NCCL_IGNORE_CPU_AFFINITY": "1",
             "NCCL_IB_DISABLE": "1",
             "NCCL_P2P_DISABLE": "1",
             "NCCL_SOCKET_IFNAME": "lo",
             "NCCL_IB_TIMEOUT": "1800",
-            "NCCL_DEBUG_SUBSYS": "ALL"
+            "NCCL_DEBUG_SUBSYS": "ALL",
+            "TORCH_NCCL_BLOCKING_WAIT": "1",
+            "NCCL_ASYNC_ERROR_HANDLING": "1"
         })
 
         cmd = [
