@@ -1,6 +1,8 @@
 import os
 import sys
 import tempfile
+import subprocess
+import torch
 from typing import List
 
 # Add project root to python path for vace imports
@@ -107,7 +109,21 @@ class Predictor(BasePredictor):
         ),
     ) -> Path:
         """Run a single prediction on the model"""
-        # Prepare arguments
+        # Print CUDA and NCCL version information
+        print("CUDA Version:", torch.version.cuda)
+        print("NCCL Version:", torch.cuda.nccl.version())
+        print("PyTorch Version:", torch.__version__)
+        print("CUDA Available:", torch.cuda.is_available())
+        print("CUDA Device Count:", torch.cuda.device_count())
+        if torch.cuda.is_available():
+            print("CUDA Device Name:", torch.cuda.get_device_name(0))
+            print("CUDA Device Capability:", torch.cuda.get_device_capability(0))
+
+        # Create a temporary directory for the output
+        temp_dir = tempfile.mkdtemp()
+        output_path = os.path.join(temp_dir, "output.mp4")
+
+        # Prepare arguments for vace_wan_inference
         args = type('Args', (), {
             'model_name': model_name,
             'prompt': prompt,
@@ -123,22 +139,59 @@ class Predictor(BasePredictor):
             'sample_guide_scale': sample_guide_scale,
             'ckpt_dir': self.ckpt_dir,
             'offload_model': False,
-            'ulysses_size': 1,
-            'ring_size': 1,
-            't5_fsdp': False,
+            'ulysses_size': 2,  # Number of GPUs
+            'ring_size': 1,     # For 14B model
+            't5_fsdp': True,    # Enable FSDP for T5
             't5_cpu': False,
-            'dit_fsdp': False,
+            'dit_fsdp': True,   # Enable FSDP for DIT
             'use_prompt_extend': 'plain',
-            'save_file': None,
+            'save_file': output_path,
         })()
 
-        # Create a temporary directory for the output
-        temp_dir = tempfile.mkdtemp()
-        output_path = os.path.join(temp_dir, "output.mp4")
-        args.save_file = output_path
+        # Run vace_wan_inference with torch.distributed.run for multi-GPU support
+        env = os.environ.copy()
+        env.update({
+            "NCCL_DEBUG": "INFO",
+            "NCCL_IB_DISABLE": "1",
+            "NCCL_P2P_DISABLE": "1",
+            "NCCL_SOCKET_IFNAME": "lo",
+            "NCCL_IB_TIMEOUT": "1800",
+            "NCCL_DEBUG_SUBSYS": "ALL"
+        })
 
-        # Generate output using vace_wan_inference
-        vace_wan_inference(args)
+        cmd = [
+            sys.executable,
+            "-m",
+            "torch.distributed.run",
+            "--nproc_per_node=2",
+            "vace/vace_wan_inference.py",
+            "--model_name", args.model_name,
+            "--prompt", args.prompt,
+            "--ckpt_dir", args.ckpt_dir,
+            "--size", args.size,
+            "--frame_num", str(args.frame_num),
+            "--base_seed", str(args.base_seed),
+            "--sample_solver", args.sample_solver,
+            "--sample_steps", str(args.sample_steps),
+            "--sample_shift", str(args.sample_shift),
+            "--sample_guide_scale", str(args.sample_guide_scale),
+            "--ulysses_size", str(args.ulysses_size),
+            "--ring_size", str(args.ring_size),
+            "--t5_fsdp",
+            "--dit_fsdp",
+            "--use_prompt_extend", args.use_prompt_extend,
+            "--save_file", args.save_file
+        ]
+
+        if args.src_video:
+            cmd.extend(["--src_video", args.src_video])
+        if args.src_mask:
+            cmd.extend(["--src_mask", args.src_mask])
+        if args.src_ref_images:
+            cmd.extend(["--src_ref_images"] + args.src_ref_images)
+
+        # Run the command with the modified environment
+        subprocess.run(cmd, check=True, env=env)
 
         # Return the output path
         return Path(output_path) 
