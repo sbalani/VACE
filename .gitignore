@@ -19,3 +19,7 @@ vace.egg-info
 *.ipynb_checkpoints*
 *.vscode
 /models/*
+
+# Ignore Cog temporary files
+.cog/
+.cog/tmp/
