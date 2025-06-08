@@ -9,13 +9,11 @@ import imageio
 import numpy as np
 import torch
 import gradio as gr
-from huggingface_hub import snapshot_download
 
 sys.path.insert(0, os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3]))
 import wan
 from vace.models.wan.wan_vace import WanVace, WanVaceMP
 from vace.models.wan.configs import WAN_CONFIGS, SIZE_CONFIGS
-from vace.model_utils import ensure_model_downloaded
 
 
 class FixedSizeQueue:
@@ -262,13 +260,13 @@ if __name__ == '__main__':
     parser.add_argument('--root_path', dest='root_path', help='', default=None)
     parser.add_argument('--save_dir', dest='save_dir', help='', default='cache')
     parser.add_argument("--mp", action="store_true", help="Use Multi-GPUs",)
-    parser.add_argument("--model_name", type=str, default="vace-14B", choices=list(WAN_CONFIGS.keys()), help="The model name to run.")
+    parser.add_argument("--model_name", type=str, default="vace-1.3B", choices=list(WAN_CONFIGS.keys()), help="The model name to run.")
     parser.add_argument("--ulysses_size", type=int, default=1, help="The size of the ulysses parallelism in DiT.")
     parser.add_argument("--ring_size", type=int, default=1, help="The size of the ring attention parallelism in DiT.")
     parser.add_argument(
         "--ckpt_dir",
         type=str,
-        default='models/Wan2.1-VACE-14B',
+        default='models/Wan2.1-VACE-1.3B',
         help="The path to the checkpoint directory.",
     )
     parser.add_argument(

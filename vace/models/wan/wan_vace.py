@@ -25,7 +25,6 @@ from wan.text2video import (WanT2V, T5EncoderModel, WanVAE, shard_model, FlowDPM
                                get_sampling_sigmas, retrieve_timesteps, FlowUniPCMultistepScheduler)
 from .modules.model import VaceWanModel
 from ..utils.preprocessor import VaceVideoProcessor
-from ...model_utils import ensure_model_downloaded
 
 
 class WanVace(WanT2V):

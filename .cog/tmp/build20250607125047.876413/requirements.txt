@@ -1,5 +1,5 @@
-torch==2.5.1
-torchvision>=0.20.1,<0.21
+torch>=2.6
+torchvision>=0.20.1
 opencv-python>=4.9.0.80
 diffusers>=0.31.0
 transformers>=4.49.0
@@ -23,15 +23,9 @@ onnxruntime-gpu
 BeautifulSoup4
 huggingface_hub>=0.20.3
 xfuser>=0.4.1
-
-# Annotator requirements (no flash-attn here!)
 insightface
 git+https://github.com/facebookresearch/sam2.git
 git+https://github.com/facebookresearch/segment-anything.git
 git+https://github.com/IDEA-Research/GroundingDINO.git
 git+https://github.com/xinyu1205/recognize-anything.git
 git+https://github.com/martin-chobanyan-sdc/RAFT.git
-
-# **Do not** include anything that pulls in flash-attn here:
-# ltx-video@git+https://github.com/Lightricks/LTX-Video@ltx-video-0.9.1
-# wan@git+https://github.com/Wan-Video/Wan2.1  ← remove this line from here

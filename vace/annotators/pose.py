@@ -8,14 +8,13 @@ import torch
 import numpy as np
 from .dwpose import util
 from .dwpose.wholebody import Wholebody, HWC3, resize_image
-from .utils import convert_to_numpy, resize_image_ori
-from ..model_utils import ensure_annotator_models_downloaded, debug_check_model_path
+from .utils import convert_to_numpy
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
 
-def draw_pose(pose, H, W, use_body=True, use_face=False, use_hand=False):
+def draw_pose(pose, H, W, use_hand=False, use_body=False, use_face=False):
     bodies = pose['bodies']
     faces = pose['faces']
     hands = pose['hands']
@@ -34,24 +33,19 @@ def draw_pose(pose, H, W, use_body=True, use_face=False, use_hand=False):
 
 
 class PoseAnnotator:
-    def __init__(self, cfg):
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        models_dir = ensure_annotator_models_downloaded()
-        onnx_det_path = os.path.join(models_dir, 'pose', 'yolox_l.onnx')
-        onnx_pose_path = os.path.join(models_dir, 'pose', 'dw-ll_ucoco_384.onnx')
-        debug_check_model_path(onnx_det_path, "DWPose Detector")
-        debug_check_model_path(onnx_pose_path, "DWPose Estimator")
-        self.pose_estimation = Wholebody(
-            onnx_det=onnx_det_path,
-            onnx_pose=onnx_pose_path,
-            device=self.device
-        )
+    def __init__(self, cfg, device=None):
+        onnx_det = cfg['DETECTION_MODEL']
+        onnx_pose = cfg['POSE_MODEL']
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else device
+        self.pose_estimation = Wholebody(onnx_det, onnx_pose, device=self.device)
         self.resize_size = cfg.get("RESIZE_SIZE", 1024)
         self.use_body = cfg.get('USE_BODY', True)
         self.use_face = cfg.get('USE_FACE', True)
         self.use_hand = cfg.get('USE_HAND', True)
 
-    def __call__(self, image):
+    @torch.no_grad()
+    @torch.inference_mode
+    def forward(self, image):
         image = convert_to_numpy(image)
         input_image = HWC3(image[..., ::-1])
         return self.process(resize_image(input_image, self.resize_size), image.shape[:2])
@@ -60,7 +54,6 @@ class PoseAnnotator:
         ori_h, ori_w = ori_shape
         ori_img = ori_img.copy()
         H, W, C = ori_img.shape
-        
         with torch.no_grad():
             candidate, subset, det_result = self.pose_estimation(ori_img)
             nums, keys, locs = candidate.shape
@@ -80,7 +73,9 @@ class PoseAnnotator:
             candidate[un_visible] = -1
 
             foot = candidate[:, 18:24]
+
             faces = candidate[:, 24:92]
+
             hands = candidate[:, 92:113]
             hands = np.vstack([hands, candidate[:, 113:]])
 
@@ -123,7 +118,7 @@ class PoseAnnotator:
 
 class PoseBodyFaceAnnotator(PoseAnnotator):
     def __init__(self, cfg, device=None):
-        super().__init__(cfg)
+        super().__init__(cfg, device)
         self.use_body, self.use_face, self.use_hand = True, True, False
     @torch.no_grad()
     @torch.inference_mode
@@ -141,12 +136,13 @@ class PoseBodyFaceVideoAnnotator(PoseBodyFaceAnnotator):
         return ret_frames
 
 class PoseBodyAnnotator(PoseAnnotator):
-    def __init__(self, cfg):
-        super().__init__(cfg)
+    def __init__(self, cfg, device=None):
+        super().__init__(cfg, device)
         self.use_body, self.use_face, self.use_hand = True, False, False
-
-    def __call__(self, image):
-        ret_data, det_result = super().__call__(image)
+    @torch.no_grad()
+    @torch.inference_mode
+    def forward(self, image):
+        ret_data, det_result = super().forward(image)
         return ret_data['detected_map_body']
 
 

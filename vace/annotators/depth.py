@@ -2,31 +2,42 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import numpy as np
 import torch
-import os
 from einops import rearrange
 
 from .utils import convert_to_numpy, resize_image, resize_image_ori
-from .midas.api import MiDaSInference
-from ..model_utils import ensure_annotator_models_downloaded, debug_check_model_path
 
 class DepthAnnotator:
-    def __init__(self, cfg):
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        models_dir = ensure_annotator_models_downloaded()
-        pretrained_model = os.path.join(models_dir, 'depth', 'dpt_hybrid-midas-501f0c75.pt')
-        debug_check_model_path(pretrained_model, "MiDaS Depth")
+    def __init__(self, cfg, device=None):
+        from .midas.api import MiDaSInference
+        pretrained_model = cfg['PRETRAINED_MODEL']
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else device
         self.model = MiDaSInference(model_type='dpt_hybrid', model_path=pretrained_model).to(self.device)
-        self.model.eval()
         self.a = cfg.get('A', np.pi * 2.0)
         self.bg_th = cfg.get('BG_TH', 0.1)
 
-    def __call__(self, image):
+    @torch.no_grad()
+    @torch.inference_mode()
+    @torch.autocast('cuda', enabled=False)
+    def forward(self, image):
         image = convert_to_numpy(image)
-        image = resize_image(image, 384)
-        with torch.no_grad():
-            depth = self.model(image)
-        depth = resize_image_ori(depth, image.shape[:2])
-        return depth
+        image_depth = image
+        h, w, c = image.shape
+        image_depth, k = resize_image(image_depth,
+                                      1024 if min(h, w) > 1024 else min(h, w))
+        image_depth = torch.from_numpy(image_depth).float().to(self.device)
+        image_depth = image_depth / 127.5 - 1.0
+        image_depth = rearrange(image_depth, 'h w c -> 1 c h w')
+        depth = self.model(image_depth)[0]
+
+        depth_pt = depth.clone()
+        depth_pt -= torch.min(depth_pt)
+        depth_pt /= torch.max(depth_pt)
+        depth_pt = depth_pt.cpu().numpy()
+        depth_image = (depth_pt * 255.0).clip(0, 255).astype(np.uint8)
+        depth_image = depth_image[..., None].repeat(3, 2)
+
+        depth_image = resize_image_ori(h, w, depth_image, k)
+        return depth_image
 
 
 class DepthVideoAnnotator(DepthAnnotator):
@@ -41,9 +52,7 @@ class DepthVideoAnnotator(DepthAnnotator):
 class DepthV2Annotator:
     def __init__(self, cfg, device=None):
         from .depth_anything_v2.dpt import DepthAnythingV2
-        models_dir = ensure_annotator_models_downloaded()
-        pretrained_model = os.path.join(models_dir, 'depth', 'depth_anything_v2_vitl.pth')
-        debug_check_model_path(pretrained_model, "Depth Anything V2")
+        pretrained_model = cfg['PRETRAINED_MODEL']
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else device
         self.model = DepthAnythingV2(encoder='vitl', features=256, out_channels=[256, 512, 1024, 1024]).to(self.device)
         self.model.load_state_dict(

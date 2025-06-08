@@ -4,12 +4,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 from einops import rearrange
-import cv2
-import os
-import sys
 
-from .utils import convert_to_torch, convert_to_numpy, resize_image, resize_image_ori
-from ..model_utils import ensure_annotator_models_downloaded, debug_check_model_path
+from .utils import convert_to_torch
 
 norm_layer = nn.InstanceNorm2d
 
@@ -140,46 +136,3 @@ class ScribbleVideoAnnotator(ScribbleAnnotator):
             anno_frame = super().forward(np.array(frame))
             ret_frames.append(anno_frame)
         return ret_frames
-
-
-class ScribbleGen:
-    def __init__(self, cfg, device=None):
-        models_base_dir = ensure_annotator_models_downloaded() 
-        
-        relative_model_path_in_scribble_dir = cfg.get('PRETRAINED_MODEL_NAME', 'table5_pidinet.pth')
-        self.absolute_model_path = os.path.join(models_base_dir, 'scribble', relative_model_path_in_scribble_dir)
-
-        print(f"DEBUG ScribbleGen: Intended absolute model path: {self.absolute_model_path}")
-        debug_check_model_path(self.absolute_model_path, f"Scribble Model ({relative_model_path_in_scribble_dir})")
-
-        pidinet_module_parent_dir = os.path.join(models_base_dir, 'scribble')
-        sys.path.insert(0, pidinet_module_parent_dir)
-        try:
-            from pidinet.model import pidinet 
-        finally:
-            sys.path.pop(0) 
-
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else device
-        
-        # Pass the relative name or key that pidinet's constructor expects for architecture setup.
-        # The actual weights are loaded explicitly below using the absolute path.
-        self.model = pidinet(
-            pretrained_name=relative_model_path_in_scribble_dir, 
-            dil=cfg.get('DIL', 24), 
-            sag=cfg.get('SAG', False)
-        ).to(self.device)
-        
-        print(f"DEBUG ScribbleGen: Attempting to load weights into model from: {self.absolute_model_path}")
-        if not os.path.exists(self.absolute_model_path):
-            print(f"CRITICAL_ERROR ScribbleGen: Model file does NOT exist at {self.absolute_model_path} right before torch.load!")
-        
-        # This is the critical line (approx line 115 in the original structure I made)
-        self.model.load_state_dict(torch.load(self.absolute_model_path, map_location=self.device, weights_only=True))
-        self.model.eval()
-        self.resize_size = cfg.get("RESIZE_SIZE", 512)
-
-
-class ScribbleAnimeGen(ScribbleGen):
-    def __init__(self, cfg, device=None):
-        cfg['PRETRAINED_MODEL_NAME'] = 'anime_style/netG_A_latest.pth'
-        super().__init__(cfg, device)
